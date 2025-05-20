@@ -2,8 +2,10 @@ import * as SecureStore from 'expo-secure-store';
 import { jwtDecode } from 'jwt-decode';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import GoBackBTN from '../../components/GoBackBTN/GoBackBTN';
+import { API_URL } from '../../src/constants/env';
 
-// 获取下周一到周五的日期，返回显示和纯日期（yyyy-mm-dd）
+
 const getNextWeekDates = () => {
   const currentDate = new Date();
   const currentDay = currentDate.getDay();
@@ -44,6 +46,7 @@ interface DecodedToken {
 }
 
 const Booking = () => {
+
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const nextWeekDates = getNextWeekDates();
 
@@ -75,7 +78,7 @@ const Booking = () => {
       const userEmail = decoded.user;
       const name = userEmail.split('@')[0];
 
-      const response = await fetch('http://localhost:3001/api/attendance/booking', {
+      const response = await fetch(`${API_URL}/api/attendance/booking`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -110,8 +113,10 @@ const Booking = () => {
     return selectedDates.includes(date) ? '#FFFFFF' : '#333333';
   };
 
+
   return (
     <ScrollView style={styles.container}>
+      <GoBackBTN />
       <Text style={styles.title}>预约</Text>
 
       <View style={styles.table}>

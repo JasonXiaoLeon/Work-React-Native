@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { API_URL } from '../../../src/constants/env';
 
 const getWeekRange = (baseDate: Date, weekOffset: number) => {
   const monday = new Date(baseDate);
@@ -66,7 +67,7 @@ const Schedule = () => {
           return;
         }
 
-        const res = await fetch('http://localhost:3001/api/attendance', {
+        const res = await fetch(`${API_URL}/api/attendance`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

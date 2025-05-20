@@ -1,5 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
+import { API_URL } from '../../../src/constants/env';
+
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import {
@@ -13,6 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import GoBackBTN from '../../../components/GoBackBTN/GoBackBTN';
+import { formatDateYMD, getInternshipInfo } from '../../../src/utils/getInternshipInfo';
 
 const parseDateString = (dateStr: string): Date | null => {
   if (!dateStr) return null;
@@ -23,21 +27,17 @@ const parseDateString = (dateStr: string): Date | null => {
   return new Date(year, month - 1, day);
 };
 
-const formatDateString = (date: Date): string => {
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
 
 const Edit = () => {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [birthday, setBirthday] = useState<Date | null>(null);
   const [tempBirthday, setTempBirthday] = useState<Date | null>(null);
   const [gender, setGender] = useState('未选择');
+  const [internshipDuration, setInternshipDuration] = useState<Date | null>();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const info = internshipDuration ? getInternshipInfo(internshipDuration) : null;
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -49,16 +49,17 @@ const Edit = () => {
           return;
         }
 
-        const response = await axios.get('http://localhost:3001/api/auth/user', {
+        const response = await axios.get(`${API_URL}/api/auth/user`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        const { avatar, gender, age } = response.data;
-
+        const { avatar, gender, age, internshipStartedTime } = response.data;
+        
         setAvatar(avatar || null);
         setGender(gender || '未选择');
+        setInternshipDuration(internshipStartedTime)
 
         if (age) {
           const parsed = parseDateString(age);
@@ -84,7 +85,7 @@ const Edit = () => {
 
   const formatDate = (date: Date | null): string => {
     if (!date) return '请选择生日';
-    return formatDateString(date);
+    return formatDateYMD(date);
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -107,21 +108,21 @@ const Edit = () => {
   const handleGenderSelect = (selected: string) => {
     setGender(selected);
     setShowGenderModal(false);
-    handleSave(birthday, selected);
+    handleSave(birthday, selected );
   };
 
   const handleSave = async (birthdayValue: Date | null, genderValue: string) => {
-    const birthdayStr = birthdayValue ? formatDateString(birthdayValue) : '';
+    const birthdayStr = birthdayValue ? formatDateYMD(birthdayValue) : '';
 
     try {
-      const token = await SecureStore.getItemAsync('token');
+      const token = await SecureStore.getItemAsync('jwt');
       if (!token) {
         Alert.alert('未登录', '请先登录');
         return;
       }
 
       const response = await axios.put(
-        'http://localhost:3001/api/auth/user',
+        `${API_URL}/api/auth/user`,
         {
           gender: genderValue,
           age: birthdayStr,
@@ -154,77 +155,98 @@ const Edit = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={handleAvatarPress}>
-        <Image
-          source={avatar ? { uri: avatar } : require('../../../assets/images/icon.png')}
-          style={styles.avatar}
-        />
-      </TouchableOpacity>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>生日</Text>
-        <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
-          <Text>{formatDate(birthday)}</Text>
+    <View>      
+      <GoBackBTN/>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={handleAvatarPress}>
+          <Image
+            source={avatar ? { uri: avatar } : require('../../../assets/images/icon.png')}
+            style={styles.avatar}
+          />
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>性别</Text>
-        <TouchableOpacity style={styles.input} onPress={() => setShowGenderModal(true)}>
-          <Text>{gender}</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>生日</Text>
+          <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+            <Text>{formatDate(birthday)}</Text>
+          </TouchableOpacity>
+        </View>
 
-      <Modal
-        transparent
-        animationType="none"
-        visible={showGenderModal}
-        onRequestClose={() => setShowGenderModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalFooter}>
-            <Pressable onPress={() => handleGenderSelect('男')}>
-              <Text style={styles.genderOption}>男</Text>
-            </Pressable>
-            <Pressable onPress={() => handleGenderSelect('女')}>
-              <Text style={styles.genderOption}>女</Text>
-            </Pressable>
-            <Pressable onPress={() => setShowGenderModal(false)}>
-              <Text style={[styles.genderOption, { color: 'red' }]}>取消</Text>
-            </Pressable>
+        <View style={styles.field}>
+          <Text style={styles.label}>性别</Text>
+          <TouchableOpacity style={styles.input} onPress={() => setShowGenderModal(true)}>
+            <Text>{gender}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>实习开始日期</Text>
+          <View style={[styles.input, { backgroundColor: '#e5e7eb' }]}>
+            <Text>
+              {internshipDuration ? formatDateYMD(new Date(internshipDuration)) : '暂无日期'}
+            </Text>
           </View>
         </View>
-      </Modal>
 
-      {showDatePicker && (
+        <View style={styles.field}>
+          <Text style={styles.label}>实习结束日期</Text>
+          <View style={[styles.input, { backgroundColor: '#e5e7eb' }]}>
+            <Text>
+            {info ? `${info.end}（剩余 ${info.daysLeft} 天）` : '暂无日期'}
+            </Text>
+          </View>
+        </View>
+
         <Modal
           transparent
           animationType="none"
-          visible={showDatePicker}
-          onRequestClose={handleCancelDate}
+          visible={showGenderModal}
+          onRequestClose={() => setShowGenderModal(false)}
         >
-          <TouchableOpacity style={styles.datePickerOverlay} onPress={handleCancelDate}>
-            <View style={styles.datePickerContent} onStartShouldSetResponder={() => true}>
-              <DateTimePicker
-                value={tempBirthday || birthday || new Date()}
-                mode="date"
-                display="spinner"
-                maximumDate={new Date()}
-                onChange={handleDateChange}
-              />
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={handleCancelDate} style={styles.button}>
-                  <Text style={styles.buttonText}>取消</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleConfirmDate} style={styles.button}>
-                  <Text style={styles.buttonText}>确认</Text>
-                </TouchableOpacity>
-              </View>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalFooter}>
+              <Pressable onPress={() => handleGenderSelect('男')}>
+                <Text style={styles.genderOption}>男</Text>
+              </Pressable>
+              <Pressable onPress={() => handleGenderSelect('女')}>
+                <Text style={styles.genderOption}>女</Text>
+              </Pressable>
+              <Pressable onPress={() => setShowGenderModal(false)}>
+                <Text style={[styles.genderOption, { color: 'red' }]}>取消</Text>
+              </Pressable>
             </View>
-          </TouchableOpacity>
+          </View>
         </Modal>
-      )}
+
+        {showDatePicker && (
+          <Modal
+            transparent
+            animationType="none"
+            visible={showDatePicker}
+            onRequestClose={handleCancelDate}
+          >
+            <TouchableOpacity style={styles.datePickerOverlay} onPress={handleCancelDate}>
+              <View style={styles.datePickerContent} onStartShouldSetResponder={() => true}>
+                <DateTimePicker
+                  value={tempBirthday || birthday || new Date()}
+                  mode="date"
+                  display="spinner"
+                  maximumDate={new Date()}
+                  onChange={handleDateChange}
+                />
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity onPress={handleCancelDate} style={styles.buttonCancel}>
+                    <Text style={styles.buttonText}>取消</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleConfirmDate} style={styles.buttonConfirm}>
+                    <Text style={styles.buttonText}>确认</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        )}
+      </View>
     </View>
   );
 };
@@ -233,8 +255,6 @@ export default Edit;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     paddingTop: 50,
     paddingHorizontal: 20,
@@ -308,10 +328,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 20,
   },
-  button: {
+  buttonCancel: {
     paddingVertical: 10,
     paddingHorizontal: 30,
-    backgroundColor: '#007BFF',
+    backgroundColor: '#6B7281',
+    borderRadius: 5,
+  },
+  buttonConfirm: {
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    backgroundColor: 'green',
     borderRadius: 5,
   },
   buttonText: {

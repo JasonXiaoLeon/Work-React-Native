@@ -42,11 +42,11 @@ export default function HomeLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="workspace"
         options={{
-          title: '聊天',
+          title: '工作区',
           tabBarIcon: ({ color, size }: { color: ColorValue; size: number }) => (
-            <Ionicons name="chatbubble-outline" size={size} color={color} />
+            <Ionicons name="briefcase-outline" size={size} color={color} />
           ),
         }}
       />

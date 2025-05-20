@@ -42,7 +42,7 @@ router.post('/login', async (req: { body: { email: any; password: any; }; }, res
 });
 
 // 获取用户资料接口
-router.get('/user', authenticateToken, async (req: { user: { user: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { message: string; avatar?: any; gender?: any; age?: any; error?: unknown; }): any; new(): any; }; }; }) => {
+router.get('/user', authenticateToken, async (req: { user: { user: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { message: string; avatar?: any; gender?: any; age?: any; internshipStartedTime?:any; error?: unknown; }): any; new(): any; }; }; }) => {
   try {
     const email = req.user.user;
 
@@ -51,13 +51,13 @@ router.get('/user', authenticateToken, async (req: { user: { user: any; }; }, re
       return res.status(404).json({ message: '用户未找到' });
     }
 
-    const { avatar, gender, age } = user;
-
+    const { avatar, gender, age, internshipStartedTime } = user;
     return res.status(200).json({
       message: '获取用户信息成功',
       avatar,
       gender,
       age,
+      internshipStartedTime,
     });
   } catch (error) {
     console.error(error);

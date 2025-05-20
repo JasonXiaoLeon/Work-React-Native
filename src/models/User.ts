@@ -16,6 +16,7 @@ const userSchema = new Schema(
     refreshTokenExpires: { type: Number },
     newPassword: { type: String, default: '' },
     permissionLevel: { type: Number, default: 1 },
+    internshipStartedTime: { type: Date }
   },
   { timestamps: true }
 );

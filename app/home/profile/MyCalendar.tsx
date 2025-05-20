@@ -2,6 +2,8 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import GoBackBTN from '../../../components/GoBackBTN/GoBackBTN';
+import { API_URL } from '../../../src/constants/env';
 import { ClockData } from '../../../src/types/attendanceTime';
 
 const MyCalendar = () => {
@@ -13,7 +15,7 @@ const MyCalendar = () => {
     if (!token) return;
 
     try {
-      const response = await fetch('http://localhost:3001/api/attendance', {
+      const response = await fetch(`${API_URL}/api/attendance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -60,31 +62,35 @@ const MyCalendar = () => {
   const clockData = selectedDate ? clockDataMap[selectedDate] : null;
 
   return (
-    <View style={styles.container}>
-      <Calendar
-        onDayPress={(day) => setSelectedDate(day.dateString)}
-        markedDates={markedDates}
-      />
+    <View>
+        <GoBackBTN/>
+        <View style={styles.container}>
+          <Calendar
+            onDayPress={(day) => setSelectedDate(day.dateString)}
+            markedDates={markedDates}
+          />
 
-      <Modal visible={!!selectedDate} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{selectedDate}</Text>
-            {clockData ? (
-              <View style={styles.clockInfoContainer}>
-                <Text style={styles.clockInfo}>Clock In: <Text style={styles.clockValue}>{clockData.clockIn}</Text></Text>
-                <Text style={styles.clockInfo}>Clock Out: <Text style={styles.clockValue}>{clockData.clockOut}</Text></Text>
+          <Modal visible={!!selectedDate} transparent animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>{selectedDate}</Text>
+                {clockData ? (
+                  <View style={styles.clockInfoContainer}>
+                    <Text style={styles.clockInfo}>Clock In: <Text style={styles.clockValue}>{clockData.clockIn}</Text></Text>
+                    <Text style={styles.clockInfo}>Clock Out: <Text style={styles.clockValue}>{clockData.clockOut}</Text></Text>
+                  </View>
+                ) : (
+                  <Text style={styles.noDataText}>这天没有打卡记录</Text>
+                )}
+                <TouchableOpacity onPress={() => setSelectedDate(null)} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>关闭</Text>
+                </TouchableOpacity>
               </View>
-            ) : (
-              <Text style={styles.noDataText}>这天没有打卡记录</Text>
-            )}
-            <TouchableOpacity onPress={() => setSelectedDate(null)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>关闭</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          </Modal>
         </View>
-      </Modal>
     </View>
+
   );
 };
 
@@ -92,9 +98,6 @@ export default MyCalendar;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingTop: 50,
-    backgroundColor: '#f7f7f7',
   },
   modalOverlay: {
     flex: 1,

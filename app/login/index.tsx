@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store'; // 使用expo-secure-store
 import React, { useEffect, useState } from 'react';
+import { API_URL } from '../../src/constants/env';
+
 const LoginForm = require('./_Component/LoginForm/LoginForm').default;
 
 export default function LoginScreen() {
@@ -24,7 +26,7 @@ export default function LoginScreen() {
 
   const handleLogin = async (username: string, password: string) => {
     try {
-      const res = await fetch('http://localhost:3001/api/auth/login', {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: username, password }),
@@ -41,6 +43,7 @@ export default function LoginScreen() {
     } catch (err) {
       console.error('Error during login:', err);
       router.replace('/home');
+
       setError('网络错误或服务器未响应');
     }
   };

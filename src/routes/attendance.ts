@@ -5,8 +5,7 @@ const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-
-router.get('/', async (req: { headers: { authorization: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { message?: string; records?: any; error?: unknown; }): any; new(): any; }; }; }) => {
+router.get('/', authenticateToken, async (req: { headers: { authorization: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { message?: string; records?: any; error?: unknown; }): any; new(): any; }; }; }) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -89,14 +88,13 @@ router.get(
 router.post('/booking', authenticateToken, async (req: { body: { name:any, email: any; dates: any; }; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { message: string; }): void; new(): any; }; }; }) => {
   try {
     const { name, email, dates } = req.body;
-    console.log(email, dates)
+
     if (!email || !Array.isArray(dates) || dates.length === 0) {
       return res.status(400).json({ message: '缺少 dates 参数' });
     }
 
     const { start, end } = getNextWeekDateRange();
 
-    // 检查是否已有预约
     const existing = await Attendance.findOne({
       email,
       date: { $gte: start, $lte: end }
